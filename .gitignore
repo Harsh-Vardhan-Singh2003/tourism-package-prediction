@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+tourism_project/model_building/mlflow.db
+tourism_project/model_building/mlruns/
+tourism_project/model_building/mlartifacts/
+.env

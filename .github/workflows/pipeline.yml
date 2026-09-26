@@ -1,0 +1,69 @@
+name: Tourism Project Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deployment dependencies
+        run: pip install -r tourism_project/deployment/requirements.txt
+
+      - name: Validate Streamlit app syntax
+        run: python -m py_compile tourism_project/deployment/app.py
+
+      - name: Smoke test trained model
+        run: |
+          python - <<'PY'
+          import joblib
+          import pandas as pd
+          from pathlib import Path
+
+          model_path = Path("tourism_project/deployment/model.pkl")
+          if not model_path.exists():
+              raise FileNotFoundError("model.pkl is missing.")
+
+          model = joblib.load(model_path)
+
+          sample = pd.DataFrame([{
+              "Age": 35,
+              "TypeofContact": "Self Enquiry",
+              "CityTier": 2,
+              "DurationOfPitch": 10.0,
+              "Occupation": "Salaried",
+              "Gender": "Male",
+              "NumberOfPersonVisiting": 3,
+              "NumberOfFollowups": 3,
+              "ProductPitched": "Basic",
+              "PreferredPropertyStar": 3.0,
+              "MaritalStatus": "Married",
+              "NumberOfTrips": 3.0,
+              "Passport": 0,
+              "PitchSatisfactionScore": 3,
+              "OwnCar": 1,
+              "NumberOfChildrenVisiting": 1.0,
+              "Designation": "Executive",
+              "MonthlyIncome": 20000.0
+          }])
+
+          prediction = model.predict(sample)
+          print("Smoke test prediction:", prediction.tolist())
+
+          if hasattr(model, "predict_proba"):
+              probability = model.predict_proba(sample)[0][1]
+              print("Smoke test probability:", float(probability))
+
+          print("Model smoke test passed.")
+          PY
